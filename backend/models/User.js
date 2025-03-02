@@ -1,8 +1,9 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
 import { v4 as uuidv4 } from "uuid";
+import bcrypt from 'bcrypt';
 
-export const User = sequelize.define('User',
+const User = sequelize.define('User',
     {
         id: {
             type: DataTypes.UUID,
@@ -38,5 +39,31 @@ export const User = sequelize.define('User',
             type: DataTypes.STRING,
             allowNull: false
         }
+    }, {
+        hooks: {
+            beforeCreate: async (user) => {
+                if(user.password) {
+                    const salt = await bcrypt.genSalt(10);
+                    user.password = await bcrypt.hash(user.password, salt);
+                }
+            },
+            beforeUpdate: async (user) => {
+                if(user.changed('password')) {
+                    const salt = await bcrypt.genSalt(10);
+                    user.password = await bcrypt.hash(user.password, salt);
+                }
+            }
+        },
+        instanceMethods: {
+            isPasswordValid: async function (password) {
+                return await bcrypt.compare(password, this.password);
+            }
+        }
     }
-)
+);
+
+User.prototype.isPasswordValid = async function (password) {
+    return await bcrypt.compare(password, this.password);
+}
+
+export default User;

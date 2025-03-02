@@ -14,7 +14,7 @@ app.listen(PORT,()=>{
 });
 
 // routes
-app.use('/', userRoute);
+app.use('/user', userRoute);
 
 
 async function syncDatabase() {
